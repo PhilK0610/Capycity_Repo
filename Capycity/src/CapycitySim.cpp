@@ -7,6 +7,10 @@
 //============================================================================
 
 #include <iostream>
+#include <string>
+#include <vector>
+#include "Material.cpp"
+#include "Building.cpp"
 using namespace std;
 
 int main() {
@@ -14,26 +18,27 @@ int main() {
 	int breite;
 	int menuepunkt;
 	bool runner = true;
-
-	enum Field {
-		EMPTY, WINDKRAFT, WASSERKRAFT, SOLARPANELE
-	};
-	Field art;
+	double gesamtpreis = 0;
+	double preisWAK = Wasserkraftwerk().getGesamtPreisGebauede();
+	double preisWIK = Windkraftwerk().getGesamtPreisGebauede();
+	double preisSOL = Solar().getGesamtPreisGebauede();
+	string art;
 
 	cout << "Laenge eingeben: " << endl;
 	cin >> breite;
 	cout << "Breite eingeben: " << endl;
 	cin >> laenge;
 
-	Field baubereich[laenge][breite];
+	string baubereich[laenge][breite];
 
 	for (int i = 0; i < laenge; i++) {
 		for (int j = 0; j < breite; j++) {
-			baubereich[i][j] = EMPTY;
+			baubereich[i][j] = Empty().getLabel();
 		}
 	}
 
 	while (runner) {
+		//Menue
 		cout << "------Menue-----" << endl;
 		cout << "\t 1) Gebauede setzen" << endl;
 		cout << "\t 2) Bereich loeschen" << endl;
@@ -44,6 +49,7 @@ int main() {
 		cout << "-------------------------" << endl;
 
 		switch (menuepunkt) {
+		//Fall 1 : Gebaeude setzen
 		case 1:
 			char eingabe;
 			int lenGebaeude, breGebaeude, posx, posy;
@@ -57,17 +63,21 @@ int main() {
 			cin >> posx;
 			cin >> posy;
 			switch (eingabe) {
+			//Auswahl, des Labels
 			case 'h':
-				art = Field::WASSERKRAFT;
-				break;
+				art = Wasserkraftwerk().getLabel();
+				gesamtpreis += (lenGebaeude * breGebaeude * preisWAK);
+			break;
 			case 'w':
-				art = Field::WINDKRAFT;
+				art = Windkraftwerk().getLabel();
+				gesamtpreis += (lenGebaeude * breGebaeude * preisWIK);
 				break;
 			case 's':
-				art = Field::SOLARPANELE;
+				art = Solar().getLabel();
+				gesamtpreis += (lenGebaeude * breGebaeude * preisSOL);
 				break;
 			default:
-				art = Field::EMPTY;
+				art = Empty().getLabel();
 				break;
 			}
 
@@ -78,7 +88,7 @@ int main() {
 			} else {
 				for (int i = posy; i < posy + lenGebaeude; i++) {
 					for (int j = posx; j < posx + breGebaeude; j++) {
-						if (baubereich[i][j] == 1) {
+						if (baubereich[i][j] != "EMP") {
 							cout << "Gebaeude hier bereits vorhanden" << endl;
 							break;
 						} else
@@ -95,14 +105,22 @@ int main() {
 			cin >> deletePosx;
 			cin >> deletePosy;
 
-			if (deletePosx  > laenge || deletePosy > breite) {
+			if (deletePosx > laenge || deletePosy > breite) {
 				cout << "Gebaeude konnte nicht gelöscht werden. "
 						"Angaben liegen ausserhalb des Baubereiches";
 			} else {
 				for (int i = 0; i < laenge; i++) {
 					for (int j = 0; j < breite; j++) {
-						if(i == deletePosy && j == deletePosx) {
-							baubereich[i][j] = Field::EMPTY;
+						if (i == deletePosy && j == deletePosx) {
+							string zuLoeschendesGebaeude = baubereich[i][j];
+
+							if(zuLoeschendesGebaeude == "WAK")
+								gesamtpreis -= preisWAK;
+							else if (zuLoeschendesGebaeude == "WIK")
+								gesamtpreis -= preisWIK;
+							else
+								gesamtpreis -= preisSOL;
+							baubereich[i][j] = Empty().getLabel();
 						}
 					}
 				}
@@ -111,13 +129,27 @@ int main() {
 			//--------------------------------------
 			//case3: Ausgabe Plan
 		case 3:
+			cout << "--------Ausgabe Plan--------" << endl;
 			for (int i = 0; i < breite; i++) {
 				for (int j = 0; j < laenge; j++) {
 					cout << "[" << baubereich[i][j] << "]";
 				}
 				cout << endl;
 			}
+			cout << "--------Ausgabe Benötigte Materialien--------" << endl;
+			Wasserkraftwerk().printMaterialien();
+			Windkraftwerk().printMaterialien();
+			Solar().printMaterialien();
+
+			cout << "--------Ausgabe Einzelpreis Gebauede--------" << endl;
+			cout << "Preis Wasserkraftwerk: " << preisWAK << endl;
+			cout << "Preis Windkraftwerk: " << preisWIK << endl;
+			cout << "Preis Solar: " << preisSOL << endl;
+
+			cout << "--------Ausgabe Gesamtpreis--------" << endl;
+			cout << "Gesamtpreis: " << gesamtpreis << "\n" << endl;
 			break;
+		//Fall 4 : Beenden
 		case 4:
 			runner = false;
 			break;
